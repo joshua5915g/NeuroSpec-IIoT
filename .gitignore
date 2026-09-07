@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+ENV/
+
+# Python cache & artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Frontend builds
+dist/
+dist-ssr/
+*.local
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# IDEs & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Vercel
+.vercel/

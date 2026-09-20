@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical } from 'lucide-react';
+import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { TurbineModel } from './components/TurbineModel';
@@ -8,6 +8,8 @@ import { ReportGenerator } from './components/ReportGenerator';
 import { EcoPanel } from './components/EcoPanel';
 import { CortexChat } from './components/CortexChat';
 import { WorkOrderModal } from './components/WorkOrderModal';
+import { WelcomeModal } from './components/WelcomeModal';
+import { DemoPlaybook } from './components/DemoPlaybook';
 import { MonitorView } from './views/MonitorView';
 import { GlobalView } from './views/GlobalView';
 import { GenerativeLab } from './views/GenerativeLab';
@@ -63,6 +65,17 @@ function App() {
   });
   const [activeFault, setActiveFault] = useState<string>('HEALTHY');
   const [isWorkOrderOpen, setIsWorkOrderOpen] = useState(false);
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
+  const [isDemoPlaybookOpen, setIsDemoPlaybookOpen] = useState(false);
+
+  // Check initial onboarding guide state on first visit
+  useEffect(() => {
+    const isDismissed = localStorage.getItem('neurospec_onboarding_dismissed');
+    if (!isDismissed) {
+      setIsWelcomeModalOpen(true);
+      setIsDemoPlaybookOpen(true);
+    }
+  }, []);
 
   const [isCritical, setIsCritical] = useState(false);
   const [currentMetric, setCurrentMetric] = useState({ amp: 0, score: 0 });
@@ -455,6 +468,35 @@ function App() {
     }
   };
 
+  // --- Scenario Handlers for Guide & Playbook ---
+  const handleScenarioSelect = (scenario: 'HEALTHY' | 'FAULT' | 'AUTO_HEAL') => {
+    if (scenario === 'HEALTHY') {
+      handleSelectFault('HEALTHY');
+      handleRpmChange(3000);
+      setIsCritical(false);
+      setVibrationFactor(0);
+    } else if (scenario === 'FAULT') {
+      handleSelectFault('BPFO');
+      setIsCritical(true);
+      setVibrationFactor(0.65);
+    } else if (scenario === 'AUTO_HEAL') {
+      handleSelectFault('BPFO');
+      setIsCritical(true);
+      setVibrationFactor(0.65);
+      setTimeout(() => {
+        triggerAutoHeal();
+      }, 500);
+    }
+  };
+
+  const handleResetAll = () => {
+    handleSelectFault('HEALTHY');
+    handleRpmChange(3000);
+    setIsCritical(false);
+    setVibrationFactor(0);
+    setTotalFinancialLoss(0);
+  };
+
   // --- RPM Styling ---
   const isOptimalRpm = rpm >= 2900 && rpm <= 3100;
   const rpmColor = isOptimalRpm ? 'text-emerald-400' : rpm < 2000 || rpm > 4000 ? 'text-red-400' : 'text-orange-400';
@@ -535,6 +577,31 @@ function App() {
               }`}>
               €{totalFinancialLoss.toFixed(2)}
             </div>
+          </div>
+
+          {/* Quick Guide & Playbook Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsWelcomeModalOpen(true)}
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 text-cyan-300 border border-slate-700 hover:border-cyan-500/50 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              title="Open Platform Guide & Overview"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden md:inline">Platform Guide</span>
+            </button>
+
+            <button
+              onClick={() => setIsDemoPlaybookOpen(prev => !prev)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border ${
+                isDemoPlaybookOpen
+                  ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300 shadow-md shadow-emerald-900/40'
+                  : 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-slate-300'
+              }`}
+              title="Toggle 4-Step Interactive Tour Playbook"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden md:inline">Demo Tour</span>
+            </button>
           </div>
 
           {/* Report Generator */}
@@ -700,6 +767,32 @@ function App() {
       <WorkOrderModal
         isOpen={isWorkOrderOpen}
         onClose={() => setIsWorkOrderOpen(false)}
+      />
+
+      {/* Platform Onboarding & Welcome Guide Modal */}
+      <WelcomeModal
+        isOpen={isWelcomeModalOpen}
+        onClose={() => setIsWelcomeModalOpen(false)}
+        onSelectScenario={handleScenarioSelect}
+        onStartTour={() => {
+          setIsDemoPlaybookOpen(true);
+          setCurrentView('MONITOR');
+        }}
+      />
+
+      {/* Interactive 4-Step Demo Playbook Widget */}
+      <DemoPlaybook
+        isOpen={isDemoPlaybookOpen}
+        onClose={() => setIsDemoPlaybookOpen(false)}
+        rpm={rpm}
+        isCritical={isCritical}
+        isHealing={isHealing}
+        isWorkOrderOpen={isWorkOrderOpen}
+        onSetRpm={handleRpmChange}
+        onInjectFailure={injectFailure}
+        onAutoHeal={triggerAutoHeal}
+        onOpenWorkOrder={() => setIsWorkOrderOpen(true)}
+        onResetAll={handleResetAll}
       />
     </div>
   );

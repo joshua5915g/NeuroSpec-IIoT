@@ -4,6 +4,8 @@ import { Zap, Brain, Activity } from 'lucide-react';
 import { FFTSpectrumView } from '../components/FFTSpectrumView';
 import { NDTGaugePanel } from '../components/NDTGaugePanel';
 import { KinematicInspector } from '../components/KinematicInspector';
+import { AcousticStethoscope } from '../components/AcousticStethoscope';
+import { type BearingSpec } from '../utils/bearingDatabase';
 
 interface MonitorViewProps {
   waveData: { idx: number; val: number }[];
@@ -36,7 +38,9 @@ interface MonitorViewProps {
   rpm: number;
   activeFault: string;
   isHealing: boolean;
+  selectedBearing: BearingSpec;
   onSelectFault: (fault: string) => void;
+  onSelectBearing: (bearing: BearingSpec) => void;
   onAutoHeal: () => void;
   onOpenWorkOrder: () => void;
 }
@@ -53,7 +57,9 @@ export function MonitorView({
   rpm,
   activeFault,
   isHealing,
+  selectedBearing,
   onSelectFault,
+  onSelectBearing,
   onAutoHeal,
   onOpenWorkOrder,
 }: MonitorViewProps) {
@@ -119,32 +125,27 @@ export function MonitorView({
         const amp = spectrum[binIndex]?.amp || 0.0;
 
         // Scientific Colormap (Turbo / Inferno mapping)
-        // Normalized intensity 0.0 to 1.0
         const norm = Math.min(1.0, amp / 1.5);
         let r = 0,
           g = 0,
           b = 0;
 
         if (norm < 0.25) {
-          // Deep Blue to Cyan
           const t = norm / 0.25;
           r = Math.floor(10 * (1 - t));
           g = Math.floor(150 * t);
           b = Math.floor(120 + 135 * t);
         } else if (norm < 0.5) {
-          // Cyan to Green
           const t = (norm - 0.25) / 0.25;
           r = Math.floor(30 * t);
           g = Math.floor(150 + 70 * t);
           b = Math.floor(255 * (1 - t));
         } else if (norm < 0.75) {
-          // Green to Yellow/Amber
           const t = (norm - 0.5) / 0.25;
           r = Math.floor(30 + 225 * t);
           g = Math.floor(220);
           b = 0;
         } else {
-          // Yellow to Intense Red / White
           const t = (norm - 0.75) / 0.25;
           r = 255;
           g = Math.floor(220 * (1 - t) + 255 * t);
@@ -200,7 +201,15 @@ export function MonitorView({
         anomalyScore={currentMetric.score}
       />
 
-      {/* 2. Dual-View Oscilloscope: Time-Domain Waveform */}
+      {/* 2. Interactive Acoustic Stethoscope Sound Synthesizer */}
+      <AcousticStethoscope
+        rpm={rpm}
+        activeFault={activeFault}
+        isCritical={isCritical}
+        kinematics={kinematicMarkers}
+      />
+
+      {/* 3. Dual-View Oscilloscope: Time-Domain Waveform */}
       <div className="bg-slate-900/70 rounded-xl border border-slate-800 p-4 relative">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center gap-2">
@@ -294,14 +303,14 @@ export function MonitorView({
         </div>
       </div>
 
-      {/* 3. Dual-View Oscilloscope: Real-Time FFT Spectrum */}
+      {/* 4. Dual-View Oscilloscope: Real-Time FFT Spectrum */}
       <FFTSpectrumView
         fftSpectrum={fftSpectrum}
         kinematicMarkers={kinematicMarkers}
         activeFault={activeFault}
       />
 
-      {/* 4. Scientific STFT Waterfall Spectrogram */}
+      {/* 5. Scientific STFT Waterfall Spectrogram */}
       <div className="bg-slate-900/70 rounded-xl border border-slate-800 p-3">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center gap-2">
@@ -327,13 +336,15 @@ export function MonitorView({
         </div>
       </div>
 
-      {/* 5. Kinematic Inspector & Multi-Fault Injection Matrix */}
+      {/* 6. Kinematic Inspector & Multi-Fault Injection Matrix & Bearing Catalog */}
       <KinematicInspector
         rpm={rpm}
         kinematics={kinematicMarkers}
         activeFault={activeFault}
         isHealing={isHealing}
+        selectedBearing={selectedBearing}
         onSelectFault={onSelectFault}
+        onSelectBearing={onSelectBearing}
         onAutoHeal={onAutoHeal}
         onOpenWorkOrder={onOpenWorkOrder}
       />

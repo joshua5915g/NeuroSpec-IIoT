@@ -43,6 +43,13 @@ class RPMRequest(BaseModel):
 class FaultRequest(BaseModel):
     fault: str # 'HEALTHY', 'BPFO', 'BPFI', 'UNBALANCE', 'MISALIGNMENT', 'CAVITATION'
 
+class BearingRequest(BaseModel):
+    name: Optional[str] = "SKF 6205"
+    dp: float
+    d: float
+    n: int
+    alpha: Optional[float] = 0.0
+
 
 # --- REST API Endpoints ---
 
@@ -53,7 +60,8 @@ def read_root():
         "status": "ONLINE",
         "sampling_rate_hz": simulator.sample_rate,
         "rpm": simulator.rpm,
-        "active_fault": simulator.fault_mode
+        "active_fault": simulator.fault_mode,
+        "bearing": simulator.bearing_name
     }
 
 @app.get("/api/kinematics")
@@ -61,8 +69,18 @@ def get_kinematics():
     """Returns theoretical bearing & rotational kinematic defect frequencies."""
     return {
         "rpm": simulator.rpm,
-        "bearing_model": "SKF 6205 Deep Groove Ball Bearing",
+        "bearing_model": simulator.bearing_name,
         "frequencies_hz": simulator.get_kinematic_frequencies()
+    }
+
+@app.post("/api/set-bearing")
+def set_bearing(req: BearingRequest):
+    """Dynamically reconfigures bearing geometry constants."""
+    simulator.set_bearing(dp=req.dp, d=req.d, n=req.n, alpha_deg=req.alpha or 0.0, name=req.name or "")
+    return {
+        "success": True,
+        "bearing_model": simulator.bearing_name,
+        "kinematics": simulator.get_kinematic_frequencies()
     }
 
 @app.post("/api/set-fault")

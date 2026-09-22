@@ -38,6 +38,13 @@ class MachineSimulator:
         self.buffer_size = buffer_size
         self.dt = 1.0 / sample_rate
         
+        # Bearing Geometry (Default SKF 6205)
+        self.bearing_name = "SKF 6205 Deep Groove Ball Bearing"
+        self.dp = 39.04
+        self.d = 7.94
+        self.n = 9
+        self.alpha = 0.0
+        
         # Operational State
         self.rpm = 3000.0  # Nominal running speed
         self.fault_mode = "HEALTHY" # 'HEALTHY', 'BPFO', 'BPFI', 'UNBALANCE', 'MISALIGNMENT', 'CAVITATION'
@@ -51,6 +58,22 @@ class MachineSimulator:
         self.time_offset = 0.0
 
     @property
+    def bpfo_mult(self) -> float:
+        return (self.n / 2.0) * (1.0 - (self.d / self.dp) * np.cos(self.alpha))
+
+    @property
+    def bpfi_mult(self) -> float:
+        return (self.n / 2.0) * (1.0 + (self.d / self.dp) * np.cos(self.alpha))
+
+    @property
+    def bsf_mult(self) -> float:
+        return (self.dp / (2.0 * self.d)) * (1.0 - ((self.d / self.dp) * np.cos(self.alpha))**2)
+
+    @property
+    def ftf_mult(self) -> float:
+        return 0.5 * (1.0 - (self.d / self.dp) * np.cos(self.alpha))
+
+    @property
     def shaft_freq(self) -> float:
         """Rotational speed in Hz (1X frequency)."""
         return self.rpm / 60.0
@@ -58,20 +81,29 @@ class MachineSimulator:
     @property
     def bpfo_freq(self) -> float:
         """Ball Pass Frequency Outer Race in Hz."""
-        return self.shaft_freq * self.BPFO_MULT
+        return self.shaft_freq * self.bpfo_mult
 
     @property
     def bpfi_freq(self) -> float:
         """Ball Pass Frequency Inner Race in Hz."""
-        return self.shaft_freq * self.BPFI_MULT
+        return self.shaft_freq * self.bpfi_mult
 
     @property
     def bsf_freq(self) -> float:
         """Ball Spin Frequency in Hz."""
-        return self.shaft_freq * self.BSF_MULT
+        return self.shaft_freq * self.bsf_mult
+
+    def set_bearing(self, dp: float, d: float, n: int, alpha_deg: float = 0.0, name: str = ""):
+        """Dynamically update bearing geometry parameters."""
+        self.dp = max(10.0, float(dp))
+        self.d = max(1.0, float(d))
+        self.n = max(3, int(n))
+        self.alpha = float(alpha_deg * np.pi / 180.0)
+        if name:
+            self.bearing_name = name
 
     def get_kinematic_frequencies(self) -> Dict[str, float]:
-        """Returns kinematic defect frequencies for current RPM."""
+        """Returns kinematic defect frequencies for current RPM and bearing geometry."""
         fr = self.shaft_freq
         return {
             "1X": round(fr, 2),
@@ -79,7 +111,7 @@ class MachineSimulator:
             "BPFO": round(self.bpfo_freq, 2),
             "BPFI": round(self.bpfi_freq, 2),
             "BSF": round(self.bsf_freq, 2),
-            "FTF": round(fr * self.FTF_MULT, 2)
+            "FTF": round(fr * self.ftf_mult, 2)
         }
 
     def set_rpm(self, new_rpm: float):

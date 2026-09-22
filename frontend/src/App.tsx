@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles } from 'lucide-react';
+import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2 } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { TurbineModel } from './components/TurbineModel';
@@ -10,10 +10,13 @@ import { CortexChat } from './components/CortexChat';
 import { WorkOrderModal } from './components/WorkOrderModal';
 import { WelcomeModal } from './components/WelcomeModal';
 import { DemoPlaybook } from './components/DemoPlaybook';
+import { RootCauseCard } from './components/RootCauseCard';
+import { PrePostRepairModal } from './components/PrePostRepairModal';
 import { MonitorView } from './views/MonitorView';
 import { GlobalView } from './views/GlobalView';
 import { GenerativeLab } from './views/GenerativeLab';
 import { calculateImpact, type ImpactMetrics } from './utils/metrics';
+import { BEARING_CATALOG, calculateKinematics, type BearingSpec } from './utils/bearingDatabase';
 import './App.css';
 
 type ViewMode = 'MONITOR' | 'GLOBAL' | 'GEN_LAB';
@@ -64,7 +67,9 @@ function App() {
     urgency: 'OPTIMAL'
   });
   const [activeFault, setActiveFault] = useState<string>('HEALTHY');
+  const [selectedBearing, setSelectedBearing] = useState<BearingSpec>(BEARING_CATALOG[0]);
   const [isWorkOrderOpen, setIsWorkOrderOpen] = useState(false);
+  const [isPrePostModalOpen, setIsPrePostModalOpen] = useState(false);
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
   const [isDemoPlaybookOpen, setIsDemoPlaybookOpen] = useState(false);
 
@@ -276,9 +281,9 @@ function App() {
         // Generate simulated FFT spectrum (0-1000 Hz)
         const bins = 128;
         const spec = [];
-        const bpfo = fr * 3.585;
-        const bpfi = fr * 5.415;
-        const bsf = fr * 2.356;
+        const simKinematics = calculateKinematics(selectedBearing, rpm);
+        const bpfo = simKinematics.BPFO;
+        const bpfi = simKinematics.BPFI;
 
         for (let b = 0; b < bins; b++) {
           const freq = (b / bins) * 1000;
@@ -300,11 +305,11 @@ function App() {
 
         // Kinematic defect targets
         setKinematicMarkers({
-          '1X': Math.round(fr * 10) / 10,
-          '2X': Math.round(2 * fr * 10) / 10,
-          'BPFO': Math.round(bpfo * 10) / 10,
-          'BPFI': Math.round(bpfi * 10) / 10,
-          'BSF': Math.round(bsf * 10) / 10
+          '1X': simKinematics['1X'],
+          '2X': simKinematics['2X'],
+          'BPFO': simKinematics['BPFO'],
+          'BPFI': simKinematics['BPFI'],
+          'BSF': simKinematics['BSF']
         });
 
         // NDT indicators
@@ -426,6 +431,33 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fault })
+      });
+    } catch {
+      // Handled locally by fallback
+    }
+  };
+
+  const handleSelectBearing = async (bearing: BearingSpec) => {
+    setSelectedBearing(bearing);
+    const freqs = calculateKinematics(bearing, rpm);
+    setKinematicMarkers({
+      '1X': freqs['1X'],
+      '2X': freqs['2X'],
+      'BPFO': freqs['BPFO'],
+      'BPFI': freqs['BPFI'],
+      'BSF': freqs['BSF'],
+    });
+    try {
+      await fetch(`${API_BASE}/api/set-bearing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: bearing.name,
+          dp: bearing.dp,
+          d: bearing.d,
+          n: bearing.n,
+          alpha: bearing.alpha,
+        }),
       });
     } catch {
       // Handled locally by fallback
@@ -602,6 +634,15 @@ function App() {
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
               <span className="hidden md:inline">Demo Tour</span>
             </button>
+
+            <button
+              onClick={() => setIsPrePostModalOpen(true)}
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 text-purple-300 border border-slate-700 hover:border-purple-500/50 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              title="Open Pre- vs. Post-Repair Verification Studio"
+            >
+              <FileCheck2 className="w-3.5 h-3.5 text-purple-400" />
+              <span className="hidden md:inline">Repair Audit</span>
+            </button>
           </div>
 
           {/* Report Generator */}
@@ -707,7 +748,9 @@ function App() {
                 rpm={rpm}
                 activeFault={activeFault}
                 isHealing={isHealing}
+                selectedBearing={selectedBearing}
                 onSelectFault={handleSelectFault}
+                onSelectBearing={handleSelectBearing}
                 onAutoHeal={triggerAutoHeal}
                 onOpenWorkOrder={() => setIsWorkOrderOpen(true)}
               />
@@ -720,9 +763,21 @@ function App() {
             )}
           </div>
 
-          {/* Right: Diagnostic Terminal */}
-          <div className="lg:col-span-3">
-            <div className={`bg-slate-900/80 p-3 rounded-xl border h-full ${isCritical ? 'border-orange-500/50' :
+          {/* Right: Diagnostic Terminal & Root Cause Analysis */}
+          <div className="lg:col-span-3 space-y-4">
+            {/* Root-Cause Analysis (RCA) Confidence Card */}
+            {currentView === 'MONITOR' && (
+              <RootCauseCard
+                activeFault={activeFault}
+                rpm={rpm}
+                kinematics={kinematicMarkers}
+                ndtMetrics={ndtMetrics}
+                isoZone={isoZone}
+                onOpenPrePostModal={() => setIsPrePostModalOpen(true)}
+              />
+            )}
+
+            <div className={`bg-slate-900/80 p-3 rounded-xl border ${isCritical ? 'border-orange-500/50' :
               currentView === 'GLOBAL' ? 'border-cyan-500/50' :
                 currentView === 'GEN_LAB' ? 'border-orange-500/50' : 'border-slate-800'
               }`}>
@@ -738,7 +793,7 @@ function App() {
                   <span className="text-[8px] font-mono text-orange-400 animate-pulse ml-auto">MATCHING FFT</span>
                 )}
               </div>
-              <div className="bg-black rounded-lg p-3 h-80 overflow-y-auto font-mono text-[11px] leading-relaxed border border-slate-800">
+              <div className="bg-black rounded-lg p-3 h-64 overflow-y-auto font-mono text-[11px] leading-relaxed border border-slate-800">
                 <pre className={`whitespace-pre-wrap ${isCritical || isHealing ? 'text-orange-400' :
                   currentView === 'GLOBAL' ? 'text-cyan-400' :
                     currentView === 'GEN_LAB' ? 'text-orange-400' : 'text-emerald-500'
@@ -767,6 +822,23 @@ function App() {
       <WorkOrderModal
         isOpen={isWorkOrderOpen}
         onClose={() => setIsWorkOrderOpen(false)}
+      />
+
+      {/* Pre- vs. Post-Repair Verification Studio Modal */}
+      <PrePostRepairModal
+        isOpen={isPrePostModalOpen}
+        onClose={() => setIsPrePostModalOpen(false)}
+        currentTelemetry={{
+          rms: ndtMetrics.rms,
+          kurtosis: ndtMetrics.kurtosis,
+          crest_factor: ndtMetrics.crest_factor,
+          pk_pk: ndtMetrics.pk_pk,
+          isoZone: isoZone,
+          activeFault: activeFault,
+          rpm: rpm,
+          fft: fftSpectrum,
+        }}
+        onTriggerRepair={triggerAutoHeal}
       />
 
       {/* Platform Onboarding & Welcome Guide Modal */}

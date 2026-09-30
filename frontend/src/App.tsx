@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2 } from 'lucide-react';
+import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2, Crosshair, Fingerprint, FileCheck, DollarSign } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { TurbineModel } from './components/TurbineModel';
@@ -12,6 +12,11 @@ import { WelcomeModal } from './components/WelcomeModal';
 import { DemoPlaybook } from './components/DemoPlaybook';
 import { RootCauseCard } from './components/RootCauseCard';
 import { PrePostRepairModal } from './components/PrePostRepairModal';
+import { KineticBalancer } from './components/KineticBalancer';
+import { NeuroInterlock } from './components/NeuroInterlock';
+import { SoundPrintID } from './components/SoundPrintID';
+import { ISOAuditGuard } from './components/ISOAuditGuard';
+import { DowntimeShield } from './components/DowntimeShield';
 import { MonitorView } from './views/MonitorView';
 import { GlobalView } from './views/GlobalView';
 import { GenerativeLab } from './views/GenerativeLab';
@@ -72,6 +77,13 @@ function App() {
   const [isPrePostModalOpen, setIsPrePostModalOpen] = useState(false);
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
   const [isDemoPlaybookOpen, setIsDemoPlaybookOpen] = useState(false);
+
+  // --- Premium Features Modal States ---
+  const [isKineticBalancerOpen, setIsKineticBalancerOpen] = useState(false);
+  const [isNeuroInterlockOpen, setIsNeuroInterlockOpen] = useState(false);
+  const [isSoundPrintIdOpen, setIsSoundPrintIdOpen] = useState(false);
+  const [isIsoAuditGuardOpen, setIsIsoAuditGuardOpen] = useState(false);
+  const [isDowntimeShieldOpen, setIsDowntimeShieldOpen] = useState(false);
 
   // Check initial onboarding guide state on first visit
   useEffect(() => {
@@ -643,6 +655,52 @@ function App() {
               <FileCheck2 className="w-3.5 h-3.5 text-purple-400" />
               <span className="hidden md:inline">Repair Audit</span>
             </button>
+
+            {/* --- 5 Enterprise Premium Features Launchers --- */}
+            <button
+              onClick={() => setIsKineticBalancerOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 transition-all cursor-pointer shadow-sm"
+              title="KineticBalancer: Rotor Dynamic Balancing & Shaft Alignment"
+            >
+              <Crosshair className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden xl:inline">Balancing</span>
+            </button>
+
+            <button
+              onClick={() => setIsNeuroInterlockOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-500/40 flex items-center gap-1 transition-all cursor-pointer shadow-sm"
+              title="NeuroInterlock: SCADA/PLC Closed-Loop De-Rating System"
+            >
+              <Cpu className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden xl:inline">PLC Interlock</span>
+            </button>
+
+            <button
+              onClick={() => setIsSoundPrintIdOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 border border-purple-500/40 flex items-center gap-1 transition-all cursor-pointer shadow-sm"
+              title="SoundPrintID: Cross-Fleet Acoustic Fingerprint Matcher"
+            >
+              <Fingerprint className="w-3.5 h-3.5 text-purple-400" />
+              <span className="hidden xl:inline">SoundPrint</span>
+            </button>
+
+            <button
+              onClick={() => setIsIsoAuditGuardOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-blue-950/60 hover:bg-blue-900/80 text-blue-300 border border-blue-500/40 flex items-center gap-1 transition-all cursor-pointer shadow-sm"
+              title="ISOAuditGuard: ISO 10816 Compliance Audit Certificate Exporter"
+            >
+              <FileCheck className="w-3.5 h-3.5 text-blue-400" />
+              <span className="hidden xl:inline">ISO Audit</span>
+            </button>
+
+            <button
+              onClick={() => setIsDowntimeShieldOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 transition-all cursor-pointer shadow-sm"
+              title="DowntimeShield: Production Loss & Financial Risk Exposure Matrix"
+            >
+              <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden xl:inline">Financials</span>
+            </button>
           </div>
 
           {/* Report Generator */}
@@ -865,6 +923,41 @@ function App() {
         onAutoHeal={triggerAutoHeal}
         onOpenWorkOrder={() => setIsWorkOrderOpen(true)}
         onResetAll={handleResetAll}
+      />
+
+      {/* --- 5 ENTERPRISE PREMIUM FEATURE MODALS --- */}
+      <KineticBalancer
+        isOpen={isKineticBalancerOpen}
+        onClose={() => setIsKineticBalancerOpen(false)}
+        rpm={rpm}
+      />
+
+      <NeuroInterlock
+        isOpen={isNeuroInterlockOpen}
+        onClose={() => setIsNeuroInterlockOpen(false)}
+        rpm={rpm}
+        setRpm={setRpm}
+        isCritical={isCritical}
+      />
+
+      <SoundPrintID
+        isOpen={isSoundPrintIdOpen}
+        onClose={() => setIsSoundPrintIdOpen(false)}
+        activeFault={activeFault}
+      />
+
+      <ISOAuditGuard
+        isOpen={isIsoAuditGuardOpen}
+        onClose={() => setIsIsoAuditGuardOpen(false)}
+        rpm={rpm}
+        ndtMetrics={ndtMetrics}
+        isoZone={isoZone}
+      />
+
+      <DowntimeShield
+        isOpen={isDowntimeShieldOpen}
+        onClose={() => setIsDowntimeShieldOpen(false)}
+        isCritical={isCritical}
       />
     </div>
   );

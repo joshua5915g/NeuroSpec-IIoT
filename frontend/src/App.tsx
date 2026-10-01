@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2, Crosshair, Fingerprint, FileCheck, DollarSign } from 'lucide-react';
+import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2, Crosshair, Fingerprint, FileCheck, DollarSign, Layers } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { TurbineModel } from './components/TurbineModel';
@@ -17,6 +17,7 @@ import { NeuroInterlock } from './components/NeuroInterlock';
 import { SoundPrintID } from './components/SoundPrintID';
 import { ISOAuditGuard } from './components/ISOAuditGuard';
 import { DowntimeShield } from './components/DowntimeShield';
+import { HolographicWaterfall } from './components/HolographicWaterfall';
 import { MonitorView } from './views/MonitorView';
 import { GlobalView } from './views/GlobalView';
 import { GenerativeLab } from './views/GenerativeLab';
@@ -84,6 +85,7 @@ function App() {
   const [isSoundPrintIdOpen, setIsSoundPrintIdOpen] = useState(false);
   const [isIsoAuditGuardOpen, setIsIsoAuditGuardOpen] = useState(false);
   const [isDowntimeShieldOpen, setIsDowntimeShieldOpen] = useState(false);
+  const [isWaterfallOpen, setIsWaterfallOpen] = useState(false);
 
   // Check initial onboarding guide state on first visit
   useEffect(() => {
@@ -701,6 +703,15 @@ function App() {
               <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
               <span className="hidden xl:inline">Financials</span>
             </button>
+
+            <button
+              onClick={() => setIsWaterfallOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 flex items-center gap-1 transition-all cursor-pointer shadow-sm"
+              title="Holographic 3D STFT Waterfall Spectrogram"
+            >
+              <Layers className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden xl:inline">3D Waterfall</span>
+            </button>
           </div>
 
           {/* Report Generator */}
@@ -958,6 +969,15 @@ function App() {
         isOpen={isDowntimeShieldOpen}
         onClose={() => setIsDowntimeShieldOpen(false)}
         isCritical={isCritical}
+      />
+
+      <HolographicWaterfall
+        isOpen={isWaterfallOpen}
+        onClose={() => setIsWaterfallOpen(false)}
+        fftSpectrum={fftSpectrum}
+        kinematicMarkers={kinematicMarkers}
+        rpm={rpm}
+        activeFault={activeFault}
       />
     </div>
   );

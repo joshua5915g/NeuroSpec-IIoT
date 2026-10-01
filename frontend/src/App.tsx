@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2, Crosshair, Fingerprint, FileCheck, DollarSign, Layers, Flame, Disc } from 'lucide-react';
+import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2, Crosshair, Fingerprint, FileCheck, DollarSign, Layers, Flame, Disc, Compass } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { TurbineModel } from './components/TurbineModel';
@@ -20,6 +20,7 @@ import { DowntimeShield } from './components/DowntimeShield';
 import { HolographicWaterfall } from './components/HolographicWaterfall';
 import { FEAStressHeatmap } from './components/FEAStressHeatmap';
 import { ExplodedBearingViewer } from './components/ExplodedBearingViewer';
+import { ODSMagnifier } from './components/ODSMagnifier';
 import { MonitorView } from './views/MonitorView';
 import { GlobalView } from './views/GlobalView';
 import { GenerativeLab } from './views/GenerativeLab';
@@ -90,6 +91,7 @@ function App() {
   const [isWaterfallOpen, setIsWaterfallOpen] = useState(false);
   const [isFeaOpen, setIsFeaOpen] = useState(false);
   const [isExplodedBearingOpen, setIsExplodedBearingOpen] = useState(false);
+  const [isOdsOpen, setIsOdsOpen] = useState(false);
 
   // Check initial onboarding guide state on first visit
   useEffect(() => {
@@ -734,6 +736,15 @@ function App() {
               <Disc className="w-3.5 h-3.5 text-amber-400" />
               <span className="hidden xl:inline">Exploded Rig</span>
             </button>
+
+            <button
+              onClick={() => setIsOdsOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 transition-all cursor-pointer shadow-sm"
+              title="Operating Deflection Shape (ODS) Motion Magnifier"
+            >
+              <Compass className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden xl:inline">ODS Modal</span>
+            </button>
           </div>
 
           {/* Report Generator */}
@@ -1018,6 +1029,15 @@ function App() {
         activeFault={activeFault}
         isCritical={isCritical}
         kinematicMarkers={kinematicMarkers}
+      />
+
+      <ODSMagnifier
+        isOpen={isOdsOpen}
+        onClose={() => setIsOdsOpen(false)}
+        rpm={rpm}
+        activeFault={activeFault}
+        isCritical={isCritical}
+        vibrationFactor={vibrationFactor}
       />
     </div>
   );

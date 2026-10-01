@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2, Crosshair, Fingerprint, FileCheck, DollarSign, Layers } from 'lucide-react';
+import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2, Crosshair, Fingerprint, FileCheck, DollarSign, Layers, Flame } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { TurbineModel } from './components/TurbineModel';
@@ -18,6 +18,7 @@ import { SoundPrintID } from './components/SoundPrintID';
 import { ISOAuditGuard } from './components/ISOAuditGuard';
 import { DowntimeShield } from './components/DowntimeShield';
 import { HolographicWaterfall } from './components/HolographicWaterfall';
+import { FEAStressHeatmap } from './components/FEAStressHeatmap';
 import { MonitorView } from './views/MonitorView';
 import { GlobalView } from './views/GlobalView';
 import { GenerativeLab } from './views/GenerativeLab';
@@ -86,6 +87,7 @@ function App() {
   const [isIsoAuditGuardOpen, setIsIsoAuditGuardOpen] = useState(false);
   const [isDowntimeShieldOpen, setIsDowntimeShieldOpen] = useState(false);
   const [isWaterfallOpen, setIsWaterfallOpen] = useState(false);
+  const [isFeaOpen, setIsFeaOpen] = useState(false);
 
   // Check initial onboarding guide state on first visit
   useEffect(() => {
@@ -712,6 +714,15 @@ function App() {
               <Layers className="w-3.5 h-3.5 text-cyan-400" />
               <span className="hidden xl:inline">3D Waterfall</span>
             </button>
+
+            <button
+              onClick={() => setIsFeaOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 border border-purple-500/40 flex items-center gap-1 transition-all cursor-pointer shadow-sm"
+              title="FEA Stress Tensor & Thermal Heatmap"
+            >
+              <Flame className="w-3.5 h-3.5 text-purple-400" />
+              <span className="hidden xl:inline">FEA Stress</span>
+            </button>
           </div>
 
           {/* Report Generator */}
@@ -978,6 +989,15 @@ function App() {
         kinematicMarkers={kinematicMarkers}
         rpm={rpm}
         activeFault={activeFault}
+      />
+
+      <FEAStressHeatmap
+        isOpen={isFeaOpen}
+        onClose={() => setIsFeaOpen(false)}
+        rpm={rpm}
+        activeFault={activeFault}
+        isCritical={isCritical}
+        vibrationFactor={vibrationFactor}
       />
     </div>
   );

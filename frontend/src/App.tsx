@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2, Crosshair, Fingerprint, FileCheck, DollarSign, Layers, Flame, Disc, Compass } from 'lucide-react';
+import { Activity, AlertTriangle, Zap, Server, Terminal, Box, Gauge, Cpu, Globe2, FlaskConical, HelpCircle, Sparkles, FileCheck2, Crosshair, Fingerprint, FileCheck, DollarSign, Layers, Flame, Disc, Compass, Dna } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { TurbineModel } from './components/TurbineModel';
@@ -21,6 +21,7 @@ import { HolographicWaterfall } from './components/HolographicWaterfall';
 import { FEAStressHeatmap } from './components/FEAStressHeatmap';
 import { ExplodedBearingViewer } from './components/ExplodedBearingViewer';
 import { ODSMagnifier } from './components/ODSMagnifier';
+import { BiomimeticLatticeLab } from './components/BiomimeticLatticeLab';
 import { MonitorView } from './views/MonitorView';
 import { GlobalView } from './views/GlobalView';
 import { GenerativeLab } from './views/GenerativeLab';
@@ -92,6 +93,7 @@ function App() {
   const [isFeaOpen, setIsFeaOpen] = useState(false);
   const [isExplodedBearingOpen, setIsExplodedBearingOpen] = useState(false);
   const [isOdsOpen, setIsOdsOpen] = useState(false);
+  const [isBiomimeticLabOpen, setIsBiomimeticLabOpen] = useState(false);
 
   // Check initial onboarding guide state on first visit
   useEffect(() => {
@@ -745,6 +747,15 @@ function App() {
               <Compass className="w-3.5 h-3.5 text-emerald-400" />
               <span className="hidden xl:inline">ODS Modal</span>
             </button>
+
+            <button
+              onClick={() => setIsBiomimeticLabOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 flex items-center gap-1 transition-all cursor-pointer shadow-sm"
+              title="Biomimetic TPMS Lattice Generator & Metal 3D Printing Lab"
+            >
+              <Dna className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden xl:inline">TPMS Lab</span>
+            </button>
           </div>
 
           {/* Report Generator */}
@@ -1038,6 +1049,14 @@ function App() {
         activeFault={activeFault}
         isCritical={isCritical}
         vibrationFactor={vibrationFactor}
+      />
+
+      <BiomimeticLatticeLab
+        isOpen={isBiomimeticLabOpen}
+        onClose={() => setIsBiomimeticLabOpen(false)}
+        rpm={rpm}
+        activeFault={activeFault}
+        isCritical={isCritical}
       />
     </div>
   );
